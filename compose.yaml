@@ -15,7 +15,7 @@ services:
   backend-test:
     build:
       context: backend
-      dockerfile: ../Dockerfile.backend
+      dockerfile: ../backend/Dockerfile
     environment:
       DB_ADDRESS: mongodb://mongo:27017/mestodb
     command: npm run lint
@@ -27,7 +27,7 @@ services:
   backend:
     build:
       context: backend
-      dockerfile: ../Dockerfile.backend
+      dockerfile: ../backend/Dockerfile
     environment:
       DB_ADDRESS: mongodb://mongo:27017/mestodb
     depends_on:
@@ -42,21 +42,86 @@ services:
       retries: 5 
       test: node healthcheck.js
 
-  frontend-test:
+#microfrontend
+
+  auth-mf-test:
     build:
       context: frontend
-      dockerfile: ../Dockerfile.frontend
+      dockerfile: ../frontend/microfrontend/auth-mf/Dockerfile
     command: yarn test:microfrontend
     restart: 'no'
     environment:
-          CI: true
+      CI: true
 
-  frontend:
+  auth-mf:
     build:
       context: frontend
-      dockerfile: ../Dockerfile.frontend
+      dockerfile: ../frontend/microfrontend/auth-mf/Dockerfile
+    ports:
+      - 3001:3001
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  profile-mf-test:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/profile-mf/Dockerfile
+    command: yarn test:microfrontend
+    restart: 'no'
+    environment:
+      CI: true
+
+  profile-mf:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/profile-mf/Dockerfile
+    ports:
+      - 3002:3002
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  places-mf-test:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/places-mf/Dockerfile
+    command: yarn test:microfrontend
+    restart: 'no'
+    environment:
+      CI: true
+
+  places-mf:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/places-mf/Dockerfile
+    ports:
+      - 3003:3003
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  app-host-mf-test:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/Dockerfile
+    command: yarn test:microfrontend
+    restart: 'no'
+    environment:
+      CI: true
+
+  app-host-mf:
+    build:
+      context: frontend
+      dockerfile: ../frontend/microfrontend/app-host-mf/Dockerfile
     ports:
       - 3000:3000
     depends_on:
       backend:
+        condition: service_healthy
+      auth-mf:
+        condition: service_healthy
+      profile-mf:
+        condition: service_healthy
+      places-mf:
         condition: service_healthy
